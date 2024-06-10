@@ -1,0 +1,300 @@
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#define c1 PORTB.F0
+#define c2 PORTB.F1
+#define c3 PORTB.F2
+#define c4 PORTB.F3
+#define l1 PORTB.F4
+#define l2 PORTB.F5
+#define l3 PORTB.F6
+#define l4 PORTB.F7
+#define init PORTE.F0
+#define p2 PORTC.F0
+#define com2 PORTC.F1
+#define p1 PORTC.F2
+#define com1 PORTC.F3
+
+sbit LCD_RS at RD0_bit;
+sbit LCD_EN at RD1_bit;
+sbit LCD_D4 at RD4_bit;
+sbit LCD_D5 at RD5_bit;
+sbit LCD_D6 at RD6_bit;
+sbit LCD_D7 at RD7_bit;
+
+sbit LCD_RS_Direction at TRISD0_bit;
+sbit LCD_EN_Direction at TRISD1_bit;
+sbit LCD_D4_Direction at TRISD4_bit;
+sbit LCD_D5_Direction at TRISD5_bit;
+sbit LCD_D6_Direction at TRISD6_bit;
+sbit LCD_D7_Direction at TRISD7_bit;
+
+
+
+    char key ;
+    char password[5] = "0000";
+    char keystr[20]="",keystr2[20]="";
+    int phi=0,thetab=0,i=0,valeursignal[10],j=0,ampli_signal=0;
+    char signe_phi, signe_thetab;
+    int signal,tab[9][9],iamp_max , jamp_max;
+    int max1=0;
+    
+    
+void test() {
+    Lcd_Out(1, 3, "hello ");
+    Delay_ms(500);
+    Lcd_Out(1, 3, "      ");
+    Delay_ms(500);
+}
+
+void polarisation_2moteur()
+{
+  if(signe_phi="+")
+  {
+    p1=1;
+  }
+  if(signe_thetab="+")
+  {
+  p2=1;
+  }
+  if(signe_phi="-")
+  {
+  p1=0;
+  }
+  if(signe_thetab="-")
+  {
+  p2=0;
+  }
+}
+
+int amplitude_de_signal()
+{  
+ i=0;
+    while(1)
+    {
+     valeursignal[i]=signal ;
+      delay_ms(100);
+      i++;
+      if(i==10)
+      {break;}
+    }
+     max1=  valeursignal[0];
+     for (i=0 ;i<10 ;i++)
+     {
+      if(valeursignal[i] > max1)
+        {max1 = valeursignal[i];}
+     }
+     return max1;
+     
+}
+
+void main() {
+    TRISB = 0b11110000; // Keypad
+    PORTB = 0;
+    TRISE = 0b00000001; // Motors and Button
+    PORTE = 0;
+    TRISC = 0b00000000;
+    TRISA = 0b11111111;
+    
+
+    Lcd_Init();           // Initialize the LCD module
+    Lcd_Cmd(_LCD_CLEAR);  // Clear display
+    Lcd_Cmd(_LCD_CURSOR_OFF); // Cursor off
+    test();
+
+
+    //mote de passe .
+    while (1)
+    {
+        key="";
+        c1 = 1;
+        c2 = 0;
+        c3 = 0;
+        c4 = 0;
+        if (l1 == 1) key = "7";
+        if (l2 == 1) key= "4";
+        if (l3 == 1) key = "1";
+        if (l4 == 1) key = "ON";
+
+        c1 = 0;
+        c2 = 1;
+        c3 = 0;
+        c4 = 0;
+        if (l1 == 1) key= "8";
+        if (l2 == 1) key = "5";
+        if (l3 == 1) key = "2";
+        if (l4 == 1) key = "0";
+
+        c1 = 0;
+        c2 = 0;
+        c3 = 1;
+        c4 = 0;
+        if (l1 == 1) key= "9";
+        if (l2 == 1) key = "6";
+        if (l3 == 1) key= "3";
+        if (l4 == 1) key = "=";
+
+        c1 = 0;
+        c2 = 0;
+        c3 = 0;
+        c4 = 1;
+        if (l1 == 1) key = "/";
+        if (l2 == 1) key  = "*";
+        if (l3 == 1) key  = "-";
+        if (l4 == 1) key = "+";
+
+
+        Lcd_Out(1, 1, "mdp:");
+        strcat(keystr, key);
+        Lcd_Out(1, 5, keystr);
+        if (strlen(keystr)>5)
+        {
+         keystr[0] = '\0';
+        }
+        if (strcmp(keystr, password) == 0) {
+            Lcd_Out(1, 1, "mdp vrai.");
+            break;
+        }
+    }
+    //fin de mote de passe.
+
+    //commande.
+    
+    // Configure CCP1 for PWM on pin RC2
+    CCP1CON = 0b00001100; // Configure CCP1 for PWM mode
+    CCPR1L = 0x00;        // Set initial PWM duty cycle (adjust as needed)
+
+    // Configure CCP2 for PWM on pin RC1
+    CCP2CON = 0b00001100; // Configure CCP2 for PWM mode
+    CCPR2L = 0x00;        // Set initial PWM duty cycle (adjust as needed)
+    // Configure Timer2 for PWM mode
+    T2CON = 0b00000100; // Set prescaler to 1:1 and enable Timer2
+    label:
+     while (1)
+    {
+        key="";
+        c1 = 1;
+        c2 = 0;
+        c3 = 0;
+        c4 = 0;
+        if (l1 == 1) key = "7";
+        if (l2 == 1) key= "4";
+        if (l3 == 1) key = "1";
+        if (l4 == 1) key = "ON";
+
+        c1 = 0;
+        c2 = 1;
+        c3 = 0;
+        c4 = 0;
+        if (l1 == 1) key= "8";
+        if (l2 == 1) key = "5";
+        if (l3 == 1) key = "2";
+        if (l4 == 1) key = "0";
+
+        c1 = 0;
+        c2 = 0;
+        c3 = 1;
+        c4 = 0;
+        if (l1 == 1) key= "9";
+        if (l2 == 1) key = "6";
+        if (l3 == 1) key= "3";
+        if (l4 == 1) key = "=";
+
+        c1 = 0;
+        c2 = 0;
+        c3 = 0;
+        c4 = 1;
+        if (l1 == 1) key = "/";
+        if (l2 == 1) key  = "*";
+        if (l3 == 1) key  = "-";
+        if (l4 == 1) key = "+";
+
+
+        Lcd_Out(1, 1, "key:");
+        strcat(keystr, key);
+        Lcd_Out(1, 5, keystr);
+        if (strlen(keystr)>6)
+        {
+          break;
+        }
+     if(init==1)
+     {
+        goto label;
+     }
+    }
+    for( i=1;i<3;i++)
+    {
+     strcat(keystr2,keystr[i]);
+    }
+    phi=StrToInt(keystr2);
+    for( i=4;i<6;i++)
+    {
+     strcat(keystr2,keystr[i]);
+    }
+    thetab=StrToInt(keystr2);
+    signe_phi = keystr[0] ;
+    signe_thetab = keystr[3];
+    
+    polarisation_2moteur();
+    while(1)
+    {
+     CCPR1L = (255/360)*phi;
+     CCPR2L = (255/360)*thetab;
+     Delay_ms(100);
+     if(init==1)
+     {
+        goto label;
+     }
+    }
+     ADC_Init(); // defini le type des pin de registre A comme analogique .
+     signal = ADC_Read(0);
+     
+     //augmente la presition de la position de parabole.
+    while(1) //boucle infini pour assurer tout jour la bon position de parabole
+  {
+    signe_phi = "+" ; //moteur 1 tourne  a gauche
+    signe_thetab = "+" ;//moteur 2 tourne  vres le haut
+    polarisation_2moteur();
+    CCPR1L = (255/360)*4 ;
+    CCPR2L = (255/360)*4 ;
+    //remplisage de tab pour prendre la position de grand amplitude
+     for(i=0;i<9;i++)
+    { for(j=0;j<9;j++)
+      {
+      if(init==1)
+        {goto label;}
+      tab[i][j]=amplitude_de_signal() ;
+      signe_phi = "-" ; //moteur 1 tourne  a droite
+      polarisation_2moteur();
+      CCPR1L = (255/360)*1 ;
+      }
+      signe_phi = "+" ; //moteur 1 tourne  a droite
+      signe_thetab = "-" ; //moteur 2 tourne  vres le base
+      polarisation_2moteur();
+      CCPR1L = (255/360)*1 ;
+      CCPR2L = (255/360)*1 ;
+    }
+    
+    
+    max1 = tab[0][0];
+    for(i=0;i<9;i++)
+    {  for(j=0;j<9;j++)
+       {
+       
+         if (tab[i][j]>max1)
+         {
+           max1=tab[i][j];
+           iamp_max=i;
+           jamp_max=j;
+         }
+       }
+    }
+     signe_phi = "+" ; //moteur 1 tourne  a droite
+     signe_thetab = "+" ; //moteur 2 tourne  vres le base
+     polarisation_2moteur();
+     CCPR1L = (255/360)*(8-jamp_max+1) ;
+     CCPR2L = (255/360)*(8-iamp_max+1) ;
+     if(init==1)
+       {goto label;}
+  }
+}
